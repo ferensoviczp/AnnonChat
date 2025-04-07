@@ -21,7 +21,7 @@ AnnonChat é uma aplicação web de chat em tempo real onde todas as mensagens e
 
 1. Clone o repositório:
 ```bash
-git clone https://github.com/seu-usuario/annonchat.git
+git clone https://github.com/ferensoviczp/annonchat.git
 cd annonchat
 ```
 
