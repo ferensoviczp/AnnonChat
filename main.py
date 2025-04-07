@@ -41,5 +41,5 @@ app.add_url_rule('/sala/<codigo>/destruir', 'destruir_sala', roomManager.destroy
 
 if __name__ == '__main__':
     import os
-    port = int(os.environ.get("PORT", 5000))
+    port = int(os.environ.get("PORT", 9000))
     socketio.run(app, debug=True, host="0.0.0.0", port=port)
