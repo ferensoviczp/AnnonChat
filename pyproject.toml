@@ -1,7 +1,7 @@
 [project]
 name = "AnnonChat"
 version = "0.1.0"
-description = "Chat temporaria para troca de mensagens e anexos de forma segura."
+description = "Chat temporário para troca de mensagens e anexos de forma segura."
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [

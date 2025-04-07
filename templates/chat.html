@@ -1,66 +1,166 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>AnnonChat #{{ codigo }}</title>
+  <link rel="shortcut icon" href="{{url_for('static', filename='favicon.png')}}" type="image/x-icon">
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.socket.io/4.3.2/socket.io.min.js"></script>
   <style>
     ::-webkit-scrollbar {
       width: 8px;
     }
+
     ::-webkit-scrollbar-thumb {
       background-color: #64748b;
       border-radius: 10px;
     }
+
     body {
       background-color: #f8fafc;
     }
+
     @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(5px); }
-      to { opacity: 1; transform: translateY(0); }
+      from {
+        opacity: 0;
+        transform: translateY(5px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
     }
+
     .message-animation {
       animation: fadeIn 0.3s ease-out;
     }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateX(100%);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    .notification {
+      position: fixed;
+      top: 1rem;
+      right: 1rem;
+      padding: 1rem 1.5rem;
+      border-radius: 0.5rem;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      max-width: 24rem;
+      animation: slideIn 0.3s ease-out;
+      color: white;
+    }
+
+    .notification.success {
+      background-color: #22c55e;
+    }
+
+    .notification.error {
+      background-color: #ef4444;
+    }
+
+    .notification.info {
+      background-color: #3b82f6;
+    }
+
+    .notification-container {
+      position: fixed;
+      top: 1rem;
+      right: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      z-index: 1000;
+    }
   </style>
 </head>
+
 <body class="text-slate-800 font-sans min-h-screen flex flex-col">
 
   <!-- Cabeçalho -->
-  <header class="w-full bg-slate-800 text-white py-5 px-6 flex justify-between items-center shadow-sm fixed top-0 z-50 h-20">
+  <header
+    class="w-full bg-slate-800 text-white py-3 px-4 sm:py-5 sm:px-6 flex justify-between items-center shadow-sm fixed top-0 z-50 h-16 sm:h-20">
     <div class="flex items-center gap-3">
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-amber-400" fill="none" viewBox="0 0 24 24"
+        stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+          d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
       </svg>
       <h1 class="text-xl font-semibold">AnnonChat <span class="text-amber-400 font-medium">#{{ codigo }}</span></h1>
     </div>
-    <button id="copiarLink" class="text-slate-300 hover:text-white transition-colors p-2 -mr-2" title="Copiar link do chat">
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor" style="display: block;">
-        <path d="M16 1H4a2 2 0 0 0-2 2v14h2V3h12V1zm3 4H8a2 2 0 0 0-2 2v16h13a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2zm0 18H8V7h11v16z"/>
-      </svg>
-    </button>
+    <div class="flex items-center gap-2">
+      {% if canDetele %}
+      <button id="destruirSala" class="text-red-300 hover:text-red-400 transition-colors p-2 hidden"
+        title="Destruir sala">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" />
+        </svg>
+      </button>
+      {% endif %}
+      <button id="copiarLink" class="text-slate-300 hover:text-white transition-colors p-2 -mr-2"
+        title="Copiar link do chat">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor"
+          style="display: block;">
+          <path
+            d="M16 1H4a2 2 0 0 0-2 2v14h2V3h12V1zm3 4H8a2 2 0 0 0-2 2v16h13a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2zm0 18H8V7h11v16z" />
+        </svg>
+      </button>
+    </div>
   </header>
 
   <!-- Conteúdo principal -->
-  <main class="pt-24 px-4 sm:px-10 flex-1 flex justify-center">
-    <div class="w-full max-w-4xl bg-white rounded-lg shadow-sm flex flex-col overflow-hidden h-[calc(100vh-6rem)] border border-slate-200">
+  <main class="pt-16 px-3 sm:pt-24 sm:px-10 pb-16 sm:pb-20 flex-1 flex flex-col">
+    <div class="w-full max-w-4xl bg-white rounded-lg shadow-sm flex flex-col flex-1 border border-slate-200 mx-auto h-[calc(100vh-18rem)] sm:h-[calc(100vh-10rem)]">
 
       <!-- Mensagens -->
-      <section id="chat" class="flex-1 overflow-y-auto p-4 space-y-3 bg-white">
+      <section id="chat" class="flex-1 overflow-y-auto p-4 space-y-3 bg-white pb-2">
         <!-- As mensagens aparecerão aqui -->
       </section>
 
       <!-- Entrada de mensagem -->
-      <footer class="bg-slate-50 p-3 flex items-center gap-3 border-t border-slate-200">
+      <footer class="bg-slate-50 p-2 sm:p-3 flex items-center gap-2 sm:gap-3 border-t border-slate-200 fixed bottom-0 left-0 right-0 sm:sticky sm:left-auto sm:right-auto">
         <input type="file" id="fileInput" class="hidden">
-        <button onclick="document.getElementById('fileInput').click()" class="text-slate-500 hover:text-slate-700 transition-colors p-2 rounded-full hover:bg-slate-200" title="Anexar arquivo">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
-          </svg>
-        </button>
-        <input id="mensagem" type="text" placeholder="Digite sua mensagem..." class="flex-1 px-4 py-2 border border-slate-300 rounded-full focus:outline-none focus:ring-1 focus:ring-amber-400 focus:border-amber-400">
+        <div class="flex gap-1">
+          <button onclick="document.getElementById('fileInput').click()"
+            class="text-slate-500 hover:text-slate-700 transition-colors p-2 rounded-full hover:bg-slate-200"
+            title="Anexar arquivo">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+              stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+            </svg>
+          </button>
+          <button id="recordButton"
+            class="text-slate-500 hover:text-slate-700 transition-colors p-2 rounded-full hover:bg-slate-200"
+            title="Gravar áudio">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+              stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+            </svg>
+          </button>
+          <div id="recordingIndicator" class="hidden items-center gap-1 px-2 text-red-500">
+            <div class="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
+            <span class="text-xs">Gravando</span>
+          </div>
+        </div>
+        <input id="mensagem" type="text" placeholder="Digite sua mensagem..."
+          class="flex-1 px-4 py-2 border border-slate-300 rounded-full focus:outline-none focus:ring-1 focus:ring-amber-400 focus:border-amber-400">
         <button id="enviar" class="text-white bg-amber-500 hover:bg-amber-600 transition-colors p-2 rounded-full">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M12 5l7 7-7 7" />
@@ -75,28 +175,96 @@
   <div id="nomeModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 backdrop-blur-sm">
     <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-sm text-slate-800 border border-slate-200">
       <div class="flex items-center gap-2 mb-4">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-amber-500" fill="none" viewBox="0 0 24 24"
+          stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
         </svg>
         <h2 class="text-xl font-semibold">Identificação</h2>
       </div>
       <div class="space-y-4">
         <div>
           <label for="nomeInput" class="block text-sm font-medium text-slate-700 mb-1">Nome</label>
-          <input id="nomeInput" type="text" placeholder="Seu nome no chat" class="w-full px-3 py-2 rounded border border-slate-300 focus:outline-none focus:ring-1 focus:ring-amber-400 focus:border-amber-400">
+          <input id="nomeInput" type="text" placeholder="Seu nome no chat"
+            class="w-full px-3 py-2 rounded border border-slate-300 focus:outline-none focus:ring-1 focus:ring-amber-400 focus:border-amber-400">
         </div>
         <div>
-          <label for="fotoPerfilInput" class="block text-sm font-medium text-slate-700 mb-1">Foto de perfil (opcional)</label>
-          <input id="fotoPerfilInput" type="file" accept="image/*" class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-slate-100 file:text-slate-700 hover:file:bg-slate-200">
+          <label for="fotoPerfilInput" class="block text-sm font-medium text-slate-700 mb-1">Foto de perfil
+            (opcional)</label>
+          <input id="fotoPerfilInput" type="file" accept="image/*"
+            class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-slate-100 file:text-slate-700 hover:file:bg-slate-200">
         </div>
-        <button id="confirmarNome" class="w-full bg-amber-500 text-white py-2 rounded hover:bg-amber-600 transition-colors font-medium">Entrar no chat</button>
+        <button id="confirmarNome"
+          class="w-full bg-amber-500 text-white py-2 rounded hover:bg-amber-600 transition-colors font-medium">Entrar no
+          chat</button>
       </div>
     </div>
   </div>
 
+  <div class="notification-container" id="notificationContainer"></div>
+
   <script>
+    function mostrarNotificacao(mensagem, tipo = 'info') {
+      const container = document.getElementById('notificationContainer');
+      const notif = document.createElement('div');
+      notif.className = `notification ${tipo}`;
+      notif.innerHTML = `
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+             stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M13 16h-1v-4h-1m0-4h.01M12 9v2m0 4h.01m-.01 2h.01"/>
+        </svg>
+        <span>${mensagem}</span>
+      `;
+      container.appendChild(notif);
+
+      setTimeout(() => {
+        notif.remove();
+      }, 4000);
+    }
+
+    function showNotification(message, type = 'info', duration = 5000) {
+      const notification = document.createElement('div');
+      notification.className = `notification ${type}`;
+
+      const icon = document.createElement('div');
+      icon.innerHTML = type === 'success' ? '✓' :
+        type === 'error' ? '✕' :
+          type === 'warning' ? '⚠' : 'ℹ';
+
+      const text = document.createElement('div');
+      text.textContent = message;
+
+      const closeBtn = document.createElement('button');
+      closeBtn.className = 'notification-close';
+      closeBtn.innerHTML = '&times;';
+      closeBtn.onclick = () => notification.remove();
+
+      notification.appendChild(icon);
+      notification.appendChild(text);
+      notification.appendChild(closeBtn);
+
+      document.body.appendChild(notification);
+
+      if (duration > 0) {
+        setTimeout(() => {
+          notification.remove();
+        }, duration);
+      }
+
+      return notification;
+    }
+
     const socket = io();
-    socket.on('connect', () => console.log('Conectado ao servidor'));
+    socket.on('connect', () => {
+      console.log('Conectado ao servidor');
+      // Verifica se usuário é o criador da sala
+      fetch(`/sala/${codigo}/destruir`, { method: 'HEAD' })
+        .then(res => {
+          if (res.status === 403) return;
+          document.getElementById('destruirSala').classList.remove('hidden');
+        });
+    });
     socket.on('disconnect', () => console.log('Desconectado do servidor'));
     socket.on('connect_error', (err) => console.log('Erro de conexão:', err));
     const codigo = '{{ codigo }}';
@@ -128,7 +296,7 @@
 
     document.getElementById('copiarLink').onclick = () => {
       navigator.clipboard.writeText(window.location.href);
-      alert("🔗 Link copiado!");
+      showNotification('Link copiado para a área de transferência!', 'success', 3000);
     };
 
     enviar.onclick = enviarMensagem;
@@ -165,16 +333,28 @@
       return `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`;
     }
 
-    function criarMensagem({ nome: autor, mensagem, timestamp, fotoPerfil }) {
+    function criarMensagem({ nome: autor, mensagem, timestamp, fotoPerfil, audioUrl }) {
       const ehMeu = autor === nome;
       const div = document.createElement('div');
       div.className = `flex ${ehMeu ? 'justify-end' : 'justify-start'} message-animation`;
       div.innerHTML = `
         <div class="flex items-end gap-3 ${ehMeu ? 'flex-row-reverse' : ''}">
-          <img src="${fotoPerfil || 'https://via.placeholder.com/40'}" class="w-10 h-10 rounded-full border-2 ${ehMeu ? 'border-amber-400' : 'border-slate-300'}">
+          <img src="${fotoPerfil || 'https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_960_720.png'}" class="w-10 h-10 rounded-full border-2 ${ehMeu ? 'border-amber-400' : 'border-slate-300'}">
           <div class="${ehMeu ? 'bg-amber-50 text-right' : 'bg-white'} rounded-lg px-4 py-2 shadow-sm max-w-sm">
             <div class="text-sm font-semibold ${ehMeu ? 'text-amber-600' : 'text-slate-700'}">${autor}</div>
-            <div class="text-slate-800">${mensagem}</div>
+            ${mensagem ? `<div class="text-slate-800">${mensagem}</div>` : ''}
+            ${audioUrl ? `
+              <div class="mt-2 flex items-center gap-2 bg-slate-100 p-2 rounded-lg">
+                <svg class="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path>
+                </svg>
+                <audio controls class="flex-1" preload="metadata">
+                  <source src="${audioUrl}" type="audio/webm;codecs=opus">
+                  <source src="${audioUrl}" type="audio/ogg;codecs=opus">
+                  Seu navegador não suporta áudio.
+                </audio>
+              </div>
+            ` : ''}
             <div class="text-xs text-slate-400 mt-1">${formatarHora(timestamp)}</div>
           </div>
         </div>`;
@@ -182,27 +362,27 @@
       chat.scrollTop = chat.scrollHeight;
     }
 
-    function criarAnexo({ nome: autor, url, tipo, timestamp, fotoPerfil }) {
+    function criarAnexo({ nome: autor, url, tipo, timestamp, fotoPerfil, audioUrl }) {
       const ehMeu = autor === nome;
       const div = document.createElement('div');
       div.className = `flex ${ehMeu ? 'justify-end' : 'justify-start'} message-animation`;
-      
+
       const container = document.createElement('div');
       container.className = `flex items-end gap-3 ${ehMeu ? 'flex-row-reverse' : ''}`;
-      
+
       const imgPerfil = document.createElement('img');
       imgPerfil.src = fotoPerfil || 'https://via.placeholder.com/40';
       imgPerfil.className = `w-10 h-10 rounded-full border-2 ${ehMeu ? 'border-amber-400' : 'border-slate-300'}`;
-      
+
       const msgDiv = document.createElement('div');
       msgDiv.className = `${ehMeu ? 'bg-amber-50 text-right' : 'bg-white'} rounded-lg px-4 py-2 shadow-sm max-w-sm`;
-      
+
       const autorDiv = document.createElement('div');
       autorDiv.className = `text-sm font-semibold ${ehMeu ? 'text-amber-600' : 'text-slate-700'} mb-2`;
       autorDiv.textContent = autor;
-      
+
       const conteudoDiv = document.createElement('div');
-      
+
       if (tipo.startsWith('image/')) {
         const img = document.createElement('img');
         img.src = url;
@@ -212,14 +392,14 @@
           const modal = document.createElement('div');
           modal.className = 'fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4';
           modal.onclick = () => modal.remove();
-          
+
           const imgFull = document.createElement('img');
           imgFull.src = url;
           imgFull.className = 'max-h-full max-w-full object-contain';
-          
+
           modal.appendChild(imgFull);
           document.body.appendChild(modal);
-          
+
           // Fechar com ESC
           document.addEventListener('keydown', function fecharComEsc(e) {
             if (e.key === 'Escape') {
@@ -237,15 +417,15 @@
         link.textContent = 'Ver arquivo';
         conteudoDiv.appendChild(link);
       }
-      
+
       const horaDiv = document.createElement('div');
       horaDiv.className = 'text-xs text-slate-400 mt-1';
       horaDiv.textContent = formatarHora(timestamp);
-      
+
       msgDiv.appendChild(autorDiv);
       msgDiv.appendChild(conteudoDiv);
       msgDiv.appendChild(horaDiv);
-      
+
       container.appendChild(imgPerfil);
       container.appendChild(msgDiv);
       div.appendChild(container);
@@ -255,9 +435,114 @@
 
     socket.on('nova_mensagem', criarMensagem);
     socket.on('novo_anexo', criarAnexo);
+    socket.on('novo_audio', (data) => {
+      criarMensagem({ ...data, mensagem: '' });
+    });
+    // Audio recording functionality
+    let mediaRecorder;
+    let audioChunks = [];
+    let audioStream;
+    const recordButton = document.getElementById('recordButton');
+    const recordingIndicator = document.getElementById('recordingIndicator');
+
+    recordButton.addEventListener('mousedown', startRecording);
+    recordButton.addEventListener('mouseup', stopRecording);
+    recordButton.addEventListener('mouseleave', stopRecording);
+    recordButton.addEventListener('touchstart', startRecording);
+    recordButton.addEventListener('touchend', stopRecording);
+
+    async function startRecording(e) {
+      e.preventDefault();
+      try {
+        // Stop any existing recording first
+        if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+          mediaRecorder.stop();
+        }
+
+        // Get new audio stream
+        audioStream = await navigator.mediaDevices.getUserMedia({
+          audio: {
+            echoCancellation: true,
+            noiseSuppression: true,
+            sampleRate: 16000
+          }
+        });
+
+        mediaRecorder = new MediaRecorder(audioStream);
+        audioChunks = [];
+
+        mediaRecorder.ondataavailable = event => {
+          if (event.data.size > 0) {
+            audioChunks.push(event.data);
+          }
+        };
+
+        mediaRecorder.onstop = async () => {
+          if (audioChunks.length === 0) return;
+
+          const audioBlob = new Blob(audioChunks, { type: 'audio/webm;codecs=opus' });
+          const reader = new FileReader();
+          reader.onload = () => {
+            socket.emit('audio', {
+              codigo,
+              nome,
+              audioUrl: reader.result,
+              fotoPerfil
+            });
+          };
+          reader.readAsDataURL(audioBlob);
+
+          // Clean up
+          if (audioStream) {
+            audioStream.getTracks().forEach(track => track.stop());
+            audioStream = null;
+          }
+        };
+
+        mediaRecorder.start(100); // Collect data every 100ms
+        recordButton.classList.add('text-red-500');
+        recordingIndicator.classList.remove('hidden');
+      } catch (err) {
+        console.error('Erro ao acessar microfone:', err);
+        showNotification('Erro ao acessar o microfone. Verifique as permissões.', 'error', 5000);
+        // Clean up if error occurs
+        if (audioStream) {
+          audioStream.getTracks().forEach(track => track.stop());
+          audioStream = null;
+        }
+      }
+    }
+
+    function stopRecording(e) {
+      e.preventDefault();
+      if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+        mediaRecorder.stop();
+        recordButton.classList.remove('text-red-500');
+        recordingIndicator.classList.add('hidden');
+      }
+    }
+
+    // Ensure microphone is released when leaving page
+    window.addEventListener('beforeunload', () => {
+      if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+        mediaRecorder.stop();
+      }
+      if (audioStream) {
+        audioStream.getTracks().forEach(track => track.stop());
+      }
+    });
+
     socket.on('mensagens', mensagens => {
       chat.innerHTML = '';
-      mensagens.forEach(msg => msg.url ? criarAnexo(msg) : criarMensagem(msg));
+      mensagens.forEach(msg => {
+        if (msg.url) {
+          criarAnexo(msg);
+        } else if (msg.audioUrl) {
+          criarMensagem({ ...msg, mensagem: '' }); // Audio-only message
+        } else {
+          criarMensagem(msg);
+        }
+      });
     });
     socket.on('mensagem_sistema', texto => {
       const aviso = document.createElement('div');
@@ -266,12 +551,31 @@
       chat.appendChild(aviso);
       chat.scrollTop = chat.scrollHeight;
     });
+
+    // Handler para destruir sala
+    document.getElementById('destruirSala').addEventListener('click', () => {
+      if (confirm('Tem certeza que deseja destruir esta sala? Todos os participantes serão desconectados.')) {
+        socket.emit('destruir_sala', { codigo });
+      }
+    });
+
+    // Handler para quando sala é destruída
+    socket.on('sala_destruida', (data) => {
+      alert("A sala foi destruída pelo criador.");
+      socket.disconnect();  // Força o cliente a sair
+      window.location.href = "/"; // Ou redireciona para a home, por exemplo
+    });
+
+
+    // Handler para erros de destruição
+    socket.on('erro_destruicao', (data) => {
+      showNotification('Erro ao destruir a sala. Tente novamente.', 'error', 5000);
+    });
+
     window.addEventListener("beforeunload", () => {
       socket.emit("sair", { codigo, nome });
     });
   </script>
 </body>
+
 </html>
-
-
-
