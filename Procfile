@@ -1,1 +1,1 @@
-web: gunicorn main:app --timeout 30000
+web: gunicorn --worker-class threading --bind 0.0.0.0:5000 main:app
