@@ -1,1 +1,1 @@
-web: gunicorn --worker-class threading --bind 0.0.0.0:5000 main:app
+web: gunicorn --worker-class threading -w 1 -b 0.0.0.0:$PORT main:app
